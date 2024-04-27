@@ -4,7 +4,7 @@ async function dialogopedido(client, message) {
   // Verifica se o diálogo já foi enviado
   if (!dialogoPedidoEnviado) {
     const texto =
-      "Certo, vou encaminhar para o nosso setor de pedidos. Em alguns minutos vamos te atender!";
+      "Certo, vou encaminhar para o nosso setor de pedidos. Em alguns minutos vamos te atender!\n\n\n*Faça o seu pedido para adiantar o nosso atendimento.*";
     try {
       await client.sendText(message.from, texto);
       console.log("Mensagem enviada com sucesso."); // Retorna o objeto de sucesso

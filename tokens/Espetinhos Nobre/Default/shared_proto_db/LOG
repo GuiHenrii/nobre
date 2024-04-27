@@ -1,2 +1,3 @@
-2024/04/25-21:09:48.770 14b8 Creating DB D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\shared_proto_db since it was missing.
-2024/04/25-21:09:49.706 14b8 Reusing MANIFEST D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\shared_proto_db/MANIFEST-000001
+2024/04/27-12:39:48.189 24c Reusing MANIFEST D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\shared_proto_db/MANIFEST-000001
+2024/04/27-12:39:48.192 24c Recovering log #3
+2024/04/27-12:39:48.192 24c Reusing old log D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\shared_proto_db/000003.log 

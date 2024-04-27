@@ -99,7 +99,7 @@ function start(client) {
         const date = message.timestamp;
         atualizaStage(id, stage, date);
       }
-    
+      
       //------------- Pergunta se e revenda ou consumo
       else if (message.body === "1" && cliente.stage === 2) {
         atendimento.cliente = message.body;

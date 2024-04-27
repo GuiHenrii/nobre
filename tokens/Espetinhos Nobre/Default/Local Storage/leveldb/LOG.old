@@ -1,1 +1,15 @@
-2024/04/25-21:09:06.088 2a4c Creating DB D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\Local Storage\leveldb since it was missing.
+2024/04/27-12:37:14.890 13c8 Reusing MANIFEST D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\Local Storage\leveldb/MANIFEST-000001
+2024/04/27-12:37:14.894 13c8 Recovering log #22
+2024/04/27-12:37:14.901 13c8 Reusing old log D:\PROJETOS BOT\Espetinhos Nobre\nobre\tokens\Espetinhos Nobre\Default\Local Storage\leveldb/000022.log 
+2024/04/27-12:38:15.230 2ddc Level-0 table #26: started
+2024/04/27-12:38:15.288 2ddc Level-0 table #26: 12183 bytes OK
+2024/04/27-12:38:15.325 2ddc Delete type=0 #22
+2024/04/27-12:38:15.326 2ddc Compacting 4@0 + 1@1 files
+2024/04/27-12:38:15.377 2ddc Generated table #27@0: 13 keys, 1829 bytes
+2024/04/27-12:38:15.377 2ddc Compacted 4@0 + 1@1 files => 1829 bytes
+2024/04/27-12:38:15.414 2ddc compacted to: files[ 0 1 1 0 0 0 0 ]
+2024/04/27-12:38:15.415 2ddc Delete type=2 #16
+2024/04/27-12:38:15.415 2ddc Delete type=2 #18
+2024/04/27-12:38:15.415 2ddc Delete type=2 #21
+2024/04/27-12:38:15.415 2ddc Delete type=2 #23
+2024/04/27-12:38:15.415 2ddc Delete type=2 #26
