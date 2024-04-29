@@ -1,6 +1,6 @@
 async function dialogoVenda(client, message) {
   const texto =
-      "Para selecionar a tabela diga se seria revenda ou consumo";
+      "Para selecionar a tabela diga se seria *REVENDA* ou *CONSUMO*";
 
   await client
     .sendText(message.from, texto)

@@ -1,6 +1,3 @@
-
-// Funcionais
-// const Venom = require("venom-bot");
 const Connect = require('@wppconnect-team/wppconnect');
 const fs = require("fs");
 const moment = require("moment");
@@ -9,70 +6,105 @@ const schedule = require("node-schedule");
 const conn = require("./db/conn");
 const Sequelize = require("sequelize");
 
-// Dialogos
-const dialogoinicio = require("./dialogs/dialogoinicio.js")
-const dialogoPdf = require("./dialogs/dialogopdf.js")
-const dialogovenda = require("./dialogs/dialogovenda")
-const dialogoloc = require("./dialogs/dialogoloc.js")
+const dialogoinicio = require("./dialogs/dialogoinicio.js");
+const dialogoPdf = require("./dialogs/dialogopdf.js");
+const dialogovenda = require("./dialogs/dialogovenda");
+const dialogoloc = require("./dialogs/dialogoloc.js");
 const dialogoatendente = require('./dialogs/dialogoatendente.js');
 const dialogoConsumo = require('./dialogs/dialogoconsumo.js');
 const dialogoencerra = require('./dialogs/dialogoencerra.js');
-const dialogopedido = require('./dialogs/dialogopedido.js')
-const dialogonotif = require('./dialogs/dialogonotif.js')
-const dialogoaten = require('./dialogs/dialogoaten.js')
-//functions
+const dialogopedido = require('./dialogs/dialogopedido.js');
+const dialogonotif = require('./dialogs/dialogonotif.js');
+const dialogoaten = require('./dialogs/dialogoaten.js');
+
 const atualizaStage = require("./functions/stage.js");
-
-// Models
 const Cliente = require("./models/chat.js");
-
-
 
 const date = new Date();
 
 async function restartDatabase() {
   try {
-    // Lógica para reiniciar o banco de dados
-    await conn.sync({ force: true }); // Isso irá recriar todas as tabelas do banco de dados
-
+    await conn.sync({ force: true });
     console.log("Banco de dados reiniciado com sucesso!");
   } catch (error) {
     console.error("Erro ao reiniciar o banco de dados:", error);
+    throw error; // Lança o erro para que possa ser tratado externamente, se necessário
   }
 }
 
-// Agendar o reinício do banco de dados a cada 1 minuto
-setInterval(async () => {
-  await restartDatabase(); // Chama a função para reiniciar o banco de dados
-}, 3 * 60 * 60 * 1000); // O banco reinicia a cada 3 horas
+// Agendamento para reiniciar o banco de dados a cada 3 horas e meia
+schedule.scheduleJob('*/30 */3 * * *', async () => {
+  console.log("Reiniciando o banco de dados...");
+  await restartDatabase();
+});
 
+async function checkConnection(client) {
+  try {
+    // Verifica se o cliente está conectado
+    const isConnected = await client.isConnected();
 
-function start(client) {
+    if (isConnected) {
+      console.log("Bot está conectado ao WhatsApp.");
+    } else {
+      console.log("Bot está desconectado do WhatsApp.");
+    }
+
+    return isConnected; // Retorna o status da conexão
+  } catch (error) {
+    console.error("Erro ao verificar a conexão com o WhatsApp:", error);
+    return false; // Retorna falso em caso de erro
+  }
+}
+
+const processedMessages = new Set();
+
+async function start(client) {
   console.log("Cliente iniciado e conectado!");
-  // Inicio atendimento
+  let isConnected = true; // Movido para fora do loop de mensagens
+  
   const atendimento = {};
 
-
   client.onMessage(async (message) => {
-    if (message.from === "status@broadcast") {
-      console.log("contato lista de transmissão");
+
+    if (!isConnected) {
+      console.log("Bot está desconectado. Não é possível processar mensagens.");
       return;
     }
+
+    if (processedMessages.has(message.id.toString())) {
+      console.log("Mensagem repetida. Ignorando...");
+      return;
+    }
+    
+    // Adicionar o ID da mensagem ao conjunto de mensagens processadas
+    processedMessages.add(message.id.toString()); 
+
+    const now = moment();
+    const startHour = moment().set("hour", 8).set("minute", 10).set("second", 0); // Horário de início permitido (8:00)
+    const endHour = moment().set("hour", 18).set("minute", 0).set("second", 0); // Horário de término permitido (18:00)
+    
+    if (!now.isBetween(startHour, endHour)) {
+      console.log("Mensagem recebida fora do horário permitido.");
+      return;
+    }
+
+    if (message.from === "status@broadcast") {
+      console.log("Contato lista de transmissão");
+      return;
+    }
+
     const messageDate = new Date(message.timestamp * 1000);
     const data = new Date();
     const dataFormat = moment(data).format("YYYY-MM-DD");
     const datamessageFormat = moment(messageDate).format("YYYY-MM-DD");
-    if (dataFormat === datamessageFormat && message.isGroupMsg === false) {
-      // Se não é de grupo(false) executa o codigo e compara a data
-      // Pesquisa e deixa o cliente pronto para os update
+
+    if (dataFormat === datamessageFormat && !message.isGroupMsg) {
       const tel = message.from.replace(/@c\.us/g, "");
-      const cliente = await Cliente.findOne({
+      let cliente = await Cliente.findOne({
         raw: true,
         where: { telefone: tel },
       });
-      console.dir(cliente);
 
-      // Entra nesse if caso o cliente não exista no banco de dados
       if (!cliente) {
         const dados = {
           nome: message.notifyName,
@@ -80,9 +112,9 @@ function start(client) {
           assunto: "Pedido",
           atendido: 1,
           stage: 1,
-          date: message.timestamp, //Verificar se ele trás a hora
+          date: message.timestamp,
         };
-        const cliente = await Cliente.create(dados);
+        cliente = await Cliente.create(dados);
         dialogoinicio(client, message);
         const id = cliente.id;
         const dialogo = "dialogoinicio";
@@ -100,7 +132,7 @@ function start(client) {
         atualizaStage(id, stage, date);
       }
       
-      //------------- Pergunta se e revenda ou consumo
+      //------------- Pergunta se é revenda ou consumo
       else if (message.body === "1" && cliente.stage === 2) {
         atendimento.cliente = message.body;
         dialogovenda(client, message);
@@ -143,6 +175,22 @@ function start(client) {
         const id = cliente.id;
         atualizaStage(id, stage);
       }
+      else if (message.body === "REVENDER" && cliente.stage === 80) {
+        atendimento.cliente = message.body;
+        dialogoPdf(client, message);
+        const dialogo = "dialogoPdf";
+        const stage = 1;
+        const id = cliente.id;
+        atualizaStage(id, stage);
+      }
+      else if (message.body === "REVENDA" && cliente.stage === 80) {
+        atendimento.cliente = message.body;
+        dialogoPdf(client, message);
+        const dialogo = "dialogoPdf";
+        const stage = 1;
+        const id = cliente.id;
+        atualizaStage(id, stage);
+      }
       //-----------------------------------------------------
 
       //---------------------- Envia a tabela de consumo
@@ -155,6 +203,30 @@ function start(client) {
         atualizaStage(id, stage);
       }
       else if (message.body === "consumo" && cliente.stage === 80) {
+        atendimento.cliente = message.body;
+        dialogoConsumo(client, message);
+        const dialogo = "dialogoConsumo";
+        const stage = 1;
+        const id = cliente.id;
+        atualizaStage(id, stage);
+      }
+      else if (message.body === "CONSUMO" && cliente.stage === 80) {
+        atendimento.cliente = message.body;
+        dialogoConsumo(client, message);
+        const dialogo = "dialogoConsumo";
+        const stage = 1;
+        const id = cliente.id;
+        atualizaStage(id, stage);
+      }
+      else if (message.body === "CONSUMIR" && cliente.stage === 80) {
+        atendimento.cliente = message.body;
+        dialogoConsumo(client, message);
+        const dialogo = "dialogoConsumo";
+        const stage = 1;
+        const id = cliente.id;
+        atualizaStage(id, stage);
+      }
+      else if (message.body === "consumir" && cliente.stage === 80) {
         atendimento.cliente = message.body;
         dialogoConsumo(client, message);
         const dialogo = "dialogoConsumo";
@@ -224,21 +296,17 @@ function start(client) {
   });
 }
 
-Connect
-  .create({
-    session: "Espetinhos Nobre", //name of session
-  })
-  .then((client) => start(client))
-  .catch((erro) => {
-    console.log(erro);
-  });
+Connect.create({
+  session: "Espetinhos Nobre", // Nome da sessão
+})
+.then(async (client) => {
+  // Verifica a conexão periodicamente
+  setInterval(async () => {
+    isConnected = await checkConnection(client);
+  }, 60000); // Verifica a cada 1 minuto
 
-
-conn
-  .sync()
-  .then(() => {})
-  .catch((err) => console.log(err));
-
-
-
-  // 20/04/2024 Gui
+  start(client);
+})
+.catch((erro) => {
+  console.log(erro);
+});
